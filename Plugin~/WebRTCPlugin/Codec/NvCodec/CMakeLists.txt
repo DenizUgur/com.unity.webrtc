@@ -1,0 +1,13 @@
+target_sources(WebRTCLib
+  PRIVATE
+    NvCodec.cpp
+    NvCodec.h
+    NvControlInjection.cpp
+    NvControlInjection.h
+    NvDecoderImpl.cpp
+    NvDecoderImpl.h
+    NvEncoderCudaWithCUarray.cpp
+    NvEncoderCudaWithCUarray.h
+    NvEncoderImpl.cpp
+    NvEncoderImpl.h
+)
