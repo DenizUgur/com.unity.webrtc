@@ -123,7 +123,6 @@ namespace webrtc
 
         // Encoder control
         controllerBase = new ControllerBase();
-        controllerBase->SetEncoderRateControlFunction(&NvEncoderImpl::SetRates);
 
         m_decoder->RegisterDecodeCompleteCallback(controllerBase->GetDecodedImageCallback());
     }
@@ -512,6 +511,9 @@ namespace webrtc
 
         controllerBase->SubmitMetrics(inputFrame.timestamp_us(), m_ssim, m_psnr, m_sse);
 
+        if (controllerBase->encoderParametersNeedsChange)
+            SetRates(*controllerBase->targetRateControlParameters);
+
         CodecSpecificInfo codecInfo;
         codecInfo.codecType = kVideoCodecH264;
         codecInfo.codecSpecific.H264.packetization_mode = H264PacketizationMode::NonInterleaved;
@@ -525,13 +527,21 @@ namespace webrtc
         return WEBRTC_VIDEO_CODEC_OK;
     }
 
-    void NvEncoderImpl::SetRates(const RateControlParameters& parameters)
+    void NvEncoderImpl::SetRates(const RateControlParameters& in_parameters)
     {
         if (m_encoder == nullptr)
         {
             RTC_LOG(LS_WARNING) << "while uninitialized.";
             return;
         }
+
+        if (controllerBase->ModerateRateControl(in_parameters))
+        {
+            RTC_LOG(LS_WARNING) << "Rejected parameters because of modified rate control";
+            return;
+        }
+
+        const RateControlParameters& parameters = controllerBase->GetCurrentRateControlParameters();
 
         if (parameters.framerate_fps < 1.0)
         {

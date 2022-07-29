@@ -39,22 +39,24 @@ namespace webrtc
     class ControllerBase
     {
     private:
-        void* encoderRateControlFunction = nullptr;
         DecodedImageCallbackLocal* decodedImageCallback;
         WebSocket::pointer ws;
 
+        VideoEncoder::RateControlParameters* currentRateControlParameters = nullptr;
+
     public:
+        bool encoderParametersNeedsChange = false;
+        VideoEncoder::RateControlParameters* targetRateControlParameters = nullptr;
+
         ControllerBase();
         ~ControllerBase() {};
 
+        int ModerateRateControl(const VideoEncoder::RateControlParameters& parameters);
+        VideoEncoder::RateControlParameters& GetCurrentRateControlParameters() { return *currentRateControlParameters; }
+        void ControllerBase::ReceiveRateControlCommand(const std::string& message);
         void SubmitMetrics(int64_t time_us, double ssim, double psnr, double sse);
 
         DecodedImageCallbackLocal* GetDecodedImageCallback() { return decodedImageCallback; };
-        void SetEncoderRateControlFunction(void (NvEncoderImpl::*encoderControlFunctionPtr)(
-            const webrtc::VideoEncoder::RateControlParameters& parameters))
-        {
-            encoderRateControlFunction = &encoderControlFunctionPtr;
-        }
     };
 
 } // end namespace webrtc

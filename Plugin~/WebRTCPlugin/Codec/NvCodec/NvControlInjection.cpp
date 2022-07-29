@@ -7,7 +7,8 @@ namespace unity
 namespace webrtc
 {
 
-    ControllerBase::ControllerBase() {
+    ControllerBase::ControllerBase()
+    {
         decodedImageCallback = new DecodedImageCallbackLocal();
 
 #ifdef _WIN32
@@ -21,21 +22,110 @@ namespace webrtc
             return;
         }
 #endif
+        // Try to conenct to Web Socket server
         ws = WebSocket::from_url("ws://localhost:8080/proxy/encoder");
-        assert(ws);
+    }
+
+    int ControllerBase::ModerateRateControl(const VideoEncoder::RateControlParameters& parameters)
+    {
+        // We don't have any information so far continue with WebRTC's request
+        if (currentRateControlParameters == nullptr)
+        {
+            currentRateControlParameters = new VideoEncoder::RateControlParameters();
+            memcpy(currentRateControlParameters, &parameters, sizeof(VideoEncoder::RateControlParameters));
+            return 0;
+        }
+
+        // Continue to control the state
+        if (targetRateControlParameters == nullptr)
+        {
+            memcpy(currentRateControlParameters, &parameters, sizeof(VideoEncoder::RateControlParameters));
+            return 0;
+        }
+
+        // Proxy requested a rate control change that is different than the previous change
+        if (targetRateControlParameters != currentRateControlParameters)
+        {
+            encoderParametersNeedsChange = false;
+            memcpy(
+                currentRateControlParameters,
+                targetRateControlParameters,
+                sizeof(VideoEncoder::RateControlParameters));
+            return 0;
+        }
+
+        return 1;
+    }
+
+    void ControllerBase::ReceiveRateControlCommand(const std::string& message)
+    {
+        // We need currentRateControlParameters for fallback
+        if (currentRateControlParameters == nullptr)
+            return;
+
+        json j = json::parse(message);
+        VideoEncoder::RateControlParameters rcp;
+
+        VideoBitrateAllocation vba;
+        double fps = currentRateControlParameters->framerate_fps;
+        DataRate dr = currentRateControlParameters->bandwidth_allocation;
+
+        // If command has bitrate then create VideoBitrateAllocation if not then get current one
+        if (j.contains("encoder_bitrate"))
+            vba.SetBitrate(0, 0, (uint32_t)j["encoder_bitrate"]);
+        else
+            memcpy(&vba, &currentRateControlParameters->bitrate, sizeof(VideoBitrateAllocation));
+
+        // If command has fps then use that if not then use current one
+        if (j.contains("encoder_fps"))
+            fps = (double)j["encoder_fps"];
+
+        // if command has bandwidth_allocation then create DataRate if not then use current one
+        if (j.contains("encoder_bandwidth_allocation"))
+            rcp = VideoEncoder::RateControlParameters(
+                vba, fps, DataRate::BitsPerSec((int)j["encoder_bandwidth_allocation"]));
+        else
+            rcp = VideoEncoder::RateControlParameters(vba, fps, dr);
+
+        // After construction compare with current targetRateControlParameters if it's equal then return
+        if (targetRateControlParameters != nullptr && targetRateControlParameters == &rcp)
+            return;
+
+        // Copy newly constructed parameters to targetRateControlParameters
+        if (targetRateControlParameters == nullptr)
+            targetRateControlParameters =
+                (VideoEncoder::RateControlParameters*)malloc(sizeof(VideoEncoder::RateControlParameters));
+        memcpy(targetRateControlParameters, &rcp, sizeof(VideoEncoder::RateControlParameters));
+
+        // Finish command by calling NvEncoderImpl::SetRates ourselves
+        encoderParametersNeedsChange = true;
     }
 
     void ControllerBase::SubmitMetrics(int64_t time_us, double ssim, double psnr, double sse)
     {
+        // Check if we have ws connection
+        if (ws == nullptr || ws->getReadyState() == WebSocket::CLOSED)
+        {
+            // Can we create it then?
+            ws = WebSocket::from_url("ws://localhost:8080/proxy/encoder");
+            if (ws == nullptr)
+                return;
+        }
+
+        // Send current data
         json j = {
             { "time_us", time_us },
             { "ssim", ssim },
             { "psnr", psnr },
             { "sse", sse },
         };
-
         ws->send(j.dump());
+
+        // Poll the data
         ws->poll();
+
+        // While we are here, receive the message
+        ws->dispatch([=](const std::string message) { ReceiveRateControlCommand(message); });
     }
 
 } // end namespace webrtc
