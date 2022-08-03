@@ -41,6 +41,34 @@
     #define socketerrno WSAGetLastError()
     #define SOCKET_EAGAIN_EINPROGRESS WSAEINPROGRESS
     #define SOCKET_EWOULDBLOCK WSAEWOULDBLOCK
+#else
+    #include <fcntl.h>
+    #include <netdb.h>
+    #include <netinet/in.h>
+    #include <netinet/tcp.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <sys/socket.h>
+    #include <sys/time.h>
+    #include <sys/types.h>
+    #include <unistd.h>
+    #include <stdint.h>
+    #ifndef _SOCKET_T_DEFINED
+        typedef int socket_t;
+        #define _SOCKET_T_DEFINED
+    #endif
+    #ifndef INVALID_SOCKET
+        #define INVALID_SOCKET (-1)
+    #endif
+    #ifndef SOCKET_ERROR
+        #define SOCKET_ERROR   (-1)
+    #endif
+    #define closesocket(s) ::close(s)
+    #include <errno.h>
+    #define socketerrno errno
+    #define SOCKET_EAGAIN_EINPROGRESS EAGAIN
+    #define SOCKET_EWOULDBLOCK EWOULDBLOCK
 #endif
 
 #include <vector>

@@ -245,6 +245,7 @@ elseif(Linux)
       glad_glx_14
       ${WEBRTC_LIBRARY}
       ${GLIB_LIBRARIES}
+      nlohmann_json::nlohmann_json
   )
   target_include_directories(WebRTCLib
     SYSTEM
@@ -254,6 +255,7 @@ elseif(Linux)
       glad_vulkan_11
       glad_glx_14
       ${NVCODEC_INCLUDE_DIR}
+      ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}
   )
 
   # enable -fPIC option

@@ -32,14 +32,16 @@ namespace webrtc
         if (currentRateControlParameters == nullptr)
         {
             currentRateControlParameters = new VideoEncoder::RateControlParameters();
-            memcpy(currentRateControlParameters, &parameters, sizeof(VideoEncoder::RateControlParameters));
+            memcpy(
+                (void*)currentRateControlParameters, (void*)&parameters, sizeof(VideoEncoder::RateControlParameters));
             return 0;
         }
 
         // Continue to control the state
         if (targetRateControlParameters == nullptr)
         {
-            memcpy(currentRateControlParameters, &parameters, sizeof(VideoEncoder::RateControlParameters));
+            memcpy(
+                (void*)currentRateControlParameters, (void*)&parameters, sizeof(VideoEncoder::RateControlParameters));
             return 0;
         }
 
@@ -48,8 +50,8 @@ namespace webrtc
         {
             encoderParametersNeedsChange = false;
             memcpy(
-                currentRateControlParameters,
-                targetRateControlParameters,
+                (void*)currentRateControlParameters,
+                (void*)targetRateControlParameters,
                 sizeof(VideoEncoder::RateControlParameters));
             return 0;
         }
@@ -95,7 +97,7 @@ namespace webrtc
         if (targetRateControlParameters == nullptr)
             targetRateControlParameters =
                 (VideoEncoder::RateControlParameters*)malloc(sizeof(VideoEncoder::RateControlParameters));
-        memcpy(targetRateControlParameters, &rcp, sizeof(VideoEncoder::RateControlParameters));
+        memcpy((void*)targetRateControlParameters, (void*)&rcp, sizeof(VideoEncoder::RateControlParameters));
 
         // Finish command by calling NvEncoderImpl::SetRates ourselves
         encoderParametersNeedsChange = true;

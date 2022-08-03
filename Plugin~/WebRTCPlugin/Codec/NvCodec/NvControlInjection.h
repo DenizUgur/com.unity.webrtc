@@ -53,7 +53,7 @@ namespace webrtc
 
         int ModerateRateControl(const VideoEncoder::RateControlParameters& parameters);
         VideoEncoder::RateControlParameters& GetCurrentRateControlParameters() { return *currentRateControlParameters; }
-        void ControllerBase::ReceiveRateControlCommand(const std::string& message);
+        void ReceiveRateControlCommand(const std::string& message);
         void SubmitMetrics(int64_t time_us, double ssim, double psnr, double sse);
 
         DecodedImageCallbackLocal* GetDecodedImageCallback() { return decodedImageCallback; };

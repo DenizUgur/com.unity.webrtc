@@ -117,8 +117,6 @@ namespace webrtc
             s_maxSupportedH264Level = SupportedMaxH264Level(m_context);
 
         // Instantiate the decoder
-        int maxWidth = 4096;
-        int maxHeight = 4096;
         m_decoder = std::make_unique<NvDecoderImpl>(m_context, nullptr);
 
         // Encoder control
@@ -259,7 +257,7 @@ namespace webrtc
         m_encoder->CreateEncoder(&m_initializeParams);
 
         // and the decoder
-        m_decoder->InitDecode(codec, std::thread::hardware_concurrency() || 1);
+        m_decoder->InitDecode(codec, std::thread::hardware_concurrency());
 
         return WEBRTC_VIDEO_CODEC_OK;
     }
