@@ -21,8 +21,6 @@ mono_crash.*
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
-x64/
-x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
@@ -381,6 +379,9 @@ Runtime/Plugins/x86_64/*.lib.meta
 Runtime/Plugins/x86_64/*.ilk.meta
 Runtime/Plugins/x86_64/*.pdb.meta
 
+
+# Other
+webrtc.zip*
 
 
 
