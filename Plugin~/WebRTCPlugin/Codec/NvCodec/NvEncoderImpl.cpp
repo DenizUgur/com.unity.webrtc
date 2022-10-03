@@ -507,7 +507,14 @@ namespace webrtc
         double m_psnr = ::webrtc::I420PSNR(*ref_image->GetI420(), *new_image->GetI420());
         double m_sse = ::webrtc::I420SSE(*ref_image->GetI420(), *new_image->GetI420());
 
-        controllerBase->SubmitMetrics(inputFrame.timestamp_us(), m_ssim, m_psnr, m_sse);
+        ControllerBase::EncoderMetrics metrics;
+        metrics.ssim = m_ssim;
+        metrics.psnr = m_psnr;
+        metrics.sse = m_sse;
+        metrics.estimated_bitrate = m_bitrateAdjuster->GetEstimatedBitrateBps().value_or(-1);
+        metrics.encoded_frame_size = packet.size();
+
+        controllerBase->SubmitMetrics(inputFrame.timestamp_us(), metrics);
 
         if (controllerBase->encoderParametersNeedsChange)
             SetRates(*controllerBase->targetRateControlParameters);

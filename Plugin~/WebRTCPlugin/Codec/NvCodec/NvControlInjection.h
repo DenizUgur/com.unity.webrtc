@@ -48,13 +48,24 @@ namespace webrtc
         bool encoderParametersNeedsChange = false;
         VideoEncoder::RateControlParameters* targetRateControlParameters = nullptr;
 
+        struct EncoderMetrics
+        {
+            /* quality */
+            double ssim;
+            double psnr;
+            double sse;
+            /* bitrate */
+            uint32_t estimated_bitrate;
+            uint64_t encoded_frame_size;
+        };
+
         ControllerBase();
         ~ControllerBase() {};
 
         int ModerateRateControl(const VideoEncoder::RateControlParameters& parameters);
         VideoEncoder::RateControlParameters& GetCurrentRateControlParameters() { return *currentRateControlParameters; }
         void ReceiveRateControlCommand(const std::string& message);
-        void SubmitMetrics(int64_t time_us, double ssim, double psnr, double sse);
+        void SubmitMetrics(int64_t time_us, EncoderMetrics metrics);
 
         DecodedImageCallbackLocal* GetDecodedImageCallback() { return decodedImageCallback; };
     };

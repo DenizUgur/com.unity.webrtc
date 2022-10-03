@@ -382,6 +382,4 @@ Runtime/Plugins/x86_64/*.pdb.meta
 
 # Other
 webrtc.zip*
-
-
-
+src/

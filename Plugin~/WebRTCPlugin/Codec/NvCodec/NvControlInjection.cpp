@@ -103,7 +103,7 @@ namespace webrtc
         encoderParametersNeedsChange = true;
     }
 
-    void ControllerBase::SubmitMetrics(int64_t time_us, double ssim, double psnr, double sse)
+    void ControllerBase::SubmitMetrics(int64_t time_us, EncoderMetrics metrics)
     {
         // Check if we have ws connection
         if (ws == nullptr || ws->getReadyState() == WebSocket::CLOSED)
@@ -115,12 +115,12 @@ namespace webrtc
         }
 
         // Send current data
-        json j = {
-            { "time_us", time_us },
-            { "ssim", ssim },
-            { "psnr", psnr },
-            { "sse", sse },
-        };
+        json j = { { "time_us", time_us },
+                   { "ssim", metrics.ssim },
+                   { "psnr", metrics.psnr },
+                   { "sse", metrics.sse },
+                   { "estimated_bitrate", metrics.estimated_bitrate },
+                   { "encoded_frame_size", metrics.encoded_frame_size } };
         ws->send(j.dump());
 
         // Poll the data
