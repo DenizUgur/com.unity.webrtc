@@ -546,7 +546,7 @@ namespace webrtc
             return;
         }
 
-        const RateControlParameters& parameters = controllerBase->GetCurrentRateControlParameters();
+        const RateControlParameters& parameters = controllerBase->GetCurrentRateControlParameters(in_parameters);
 
         if (parameters.framerate_fps < 1.0)
         {

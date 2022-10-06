@@ -45,6 +45,7 @@ namespace webrtc
         VideoEncoder::RateControlParameters* currentRateControlParameters = nullptr;
 
     public:
+        bool overrideSetRates = false;
         bool encoderParametersNeedsChange = false;
         VideoEncoder::RateControlParameters* targetRateControlParameters = nullptr;
 
@@ -63,7 +64,13 @@ namespace webrtc
         ~ControllerBase() {};
 
         int ModerateRateControl(const VideoEncoder::RateControlParameters& parameters);
-        VideoEncoder::RateControlParameters& GetCurrentRateControlParameters() { return *currentRateControlParameters; }
+        const VideoEncoder::RateControlParameters& GetCurrentRateControlParameters(const VideoEncoder::RateControlParameters& in_parameters)
+        {
+            if (overrideSetRates)
+                return *currentRateControlParameters;
+            else
+                return in_parameters;
+        }
         void ReceiveRateControlCommand(const std::string& message);
         void SubmitMetrics(int64_t time_us, EncoderMetrics metrics);
 

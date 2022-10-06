@@ -46,7 +46,7 @@ namespace webrtc
         }
 
         // Proxy requested a rate control change that is different than the previous change
-        if (targetRateControlParameters != currentRateControlParameters)
+        if (*targetRateControlParameters != *currentRateControlParameters)
         {
             encoderParametersNeedsChange = false;
             memcpy(
@@ -55,6 +55,10 @@ namespace webrtc
                 sizeof(VideoEncoder::RateControlParameters));
             return 0;
         }
+
+        // We won't continue if we don't have the authorization to moderate rate control
+        if (!overrideSetRates)
+            return 0;
 
         return 1;
     }
@@ -71,6 +75,13 @@ namespace webrtc
         VideoBitrateAllocation vba;
         double fps = currentRateControlParameters->framerate_fps;
         DataRate dr = currentRateControlParameters->bandwidth_allocation;
+
+        // If command has override_set_rates then modify class attributes accordingly
+        if (j.contains("override_set_rates")) {
+            overrideSetRates = (bool)j["override_set_rates"];
+            if (!overrideSetRates)
+                encoderParametersNeedsChange = false;
+        }
 
         // If command has bitrate then create VideoBitrateAllocation if not then get current one
         if (j.contains("encoder_bitrate"))
@@ -90,7 +101,7 @@ namespace webrtc
             rcp = VideoEncoder::RateControlParameters(vba, fps, dr);
 
         // After construction compare with current targetRateControlParameters if it's equal then return
-        if (targetRateControlParameters != nullptr && targetRateControlParameters == &rcp)
+        if (targetRateControlParameters != nullptr && *targetRateControlParameters == rcp)
             return;
 
         // Copy newly constructed parameters to targetRateControlParameters
@@ -99,8 +110,8 @@ namespace webrtc
                 (VideoEncoder::RateControlParameters*)malloc(sizeof(VideoEncoder::RateControlParameters));
         memcpy((void*)targetRateControlParameters, (void*)&rcp, sizeof(VideoEncoder::RateControlParameters));
 
-        // Finish command by calling NvEncoderImpl::SetRates ourselves
-        encoderParametersNeedsChange = true;
+        // Finish command by calling NvEncoderImpl::SetRates ourselves. Only if overrideSetRates is true
+        encoderParametersNeedsChange = overrideSetRates;
     }
 
     void ControllerBase::SubmitMetrics(int64_t time_us, EncoderMetrics metrics)
